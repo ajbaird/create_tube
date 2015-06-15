@@ -1,0 +1,600 @@
+def mesh_tube(N, circ):
+    import numpy as np
+    #import matplotlib.pylab as plt 
+
+
+###################################################
+#initializing variables
+##################################################
+
+    #N = 10
+    #circ = 10            #number of points along the circle is specified when calling the function
+    L = 2.0               #size of domain is 2x2
+    dx1 =L/N 
+    dx = str(L/N)        #dx is the same as dy
+    length = 1.0          #length of straight portion 
+    points = np.ceil(length/dx1)    #points in straight portion of tube
+    theta1 = (3*np.pi)/2
+    theta2 = (np.pi)/2
+    data = N*circ*2
+    spring =str(0.1)          #spring constant is a string in order to write to file 
+    beam = str(0.1)           #beam constant 
+    n = str(N)	
+    tot_points = (4*circ+4*points)       #total points in the tube 
+    tot_points_str = str(tot_points)
+			
+####################################################
+#arrays
+##################################################
+
+
+    ricircx = np.zeros(circ)          #size of points along circle x-coordinate r denotes right hand side
+    ricircy = np.zeros(circ)          #size of points along circle y-coordinate
+    rocircx = np.zeros(circ)
+    rocircy = np.zeros(circ)
+    licircx = np.zeros(circ)
+    licircy = np.zeros(circ)
+    locircx = np.zeros(circ)
+    locircy = np.zeros(circ)
+
+######################################################
+#arrays with position values
+#######################################################
+
+    tube_points = open('tube_points.vertex','w')
+    tube_points.write(tot_points_str)
+    tube_points.write('\n')
+    str_innery = str(-1.0)
+
+    for i in np.arange(-0.5,0.5,dx1):     #writing the bottom straight outer tube
+        i_str = str(i)
+        tube_points.write(i_str)
+        tube_points.write(' ')
+        tube_points.write(str_innery)
+        tube_points.write('\n')
+    test = np.arange(-0.5,0.5,dx1)
+    print(test.size)
+        
+#################################################
+#right hand side inner/outer ring 
+#################################################
+
+    for i in np.arange(0,circ,1):
+        ricircx[i] = 0.5*np.cos(theta1)+0.5
+        ricircy[i] = 0.5*np.sin(theta1)
+        rocircx[i] = np.cos(theta1)+0.5
+        rocircy[i] = np.sin(theta1)
+        theta1 = theta1 + np.pi/circ       #update theta
+    test = np.arange(0,circ,1)
+    print(test.size)
+    #write the outer right circular portion to file
+
+    for i in np.arange(0,circ,1):
+        temp_x = str(rocircx[i])
+        temp_y = str(rocircy[i])
+        tube_points.write(temp_x)
+        tube_points.write(' ')
+        tube_points.write(temp_y)
+        tube_points.write('\n')
+        
+###################################################
+#left hand side inner/outer ring
+####################################################
+
+    for i in np.arange(0,circ, 1):
+        licircx[i] = 0.5*np.cos(theta2)-0.5
+        licircy[i] = 0.5*np.sin(theta2)
+        locircx[i] = 1.0*np.cos(theta2)-0.5
+        locircy[i] = 1.0*np.sin(theta2)
+        #print licircx, licircy, locircx, locircy, theta2
+        theta2 = theta2+np.pi/circ
+        
+
+###################################################
+#writing data to file
+##################################################
+
+#write top straight portion to file
+    
+    y_str = str(1.0)
+    for i in np.arange(0.5,-0.5,-dx1):
+        i_str = str(i)
+        tube_points.write(i_str)
+        tube_points.write(' ')
+        tube_points.write(y_str)
+        tube_points.write('\n')
+
+#write outer left circle 
+
+    for i in np.arange(0,circ,1):
+        temp_x = str(locircx[i])
+        temp_y = str(locircy[i])
+        tube_points.write(temp_x)
+        tube_points.write(' ')
+        tube_points.write(temp_y)
+        tube_points.write('\n')
+
+#write bottom inner straight tube points
+    
+    str_y = str(-0.5)
+    for i in np.arange(-0.5,0.5,dx1):
+        str_i = str(i)
+        tube_points.write(str_i)
+        tube_points.write(' ')
+        tube_points.write(str_y)
+        tube_points.write('\n')
+
+#write inner right circle
+
+    for i in np.arange(0,circ,1):
+        x_temp = str(ricircx[i])
+        y_temp = str(ricircy[i])
+        tube_points.write(x_temp)
+        tube_points.write(' ')
+        tube_points.write(y_temp)
+        tube_points.write('\n')
+
+#write top inner straight tube
+
+    str_y = str(0.5)
+    for i in np.arange(0.5,-0.5,-dx1):
+        str_i = str(i)
+        tube_points.write(str_i)
+        tube_points.write(' ')
+        tube_points.write(str_y)
+        tube_points.write('\n')
+
+#write inner left circle
+
+    for i in np.arange(0,circ,1):
+        x_temp = str(licircx[i])
+        y_temp = str(licircy[i])
+        tube_points.write(x_temp)
+        tube_points.write(' ')
+        tube_points.write(y_temp)
+        tube_points.write('\n')
+
+    tube_points.close()
+
+                           
+####################################################
+#spring data added between every two points
+###################################################
+
+    tube_spring = open('tube_points.spring','w')
+    npts = str(tot_points)
+    tube_spring.write(npts)
+    tube_spring.write('\n')
+
+
+#ds for the curved portion is different than that of the straight portion
+#ds for outer circle
+
+    ds_outer = np.sqrt((rocircx[2] - rocircx[1])**2+(rocircy[2]-rocircy[1])**2)
+    ds_outer1 = str(ds_outer)
+#ds for inner circle
+    
+    ds_inner = np.sqrt((ricircx[2] -ricircx[1])**2+(ricircy[2]-ricircy[1])**2) 
+    ds_inner1 = str(ds_inner)
+##################################################
+#writing data to file
+##################################################
+
+#straight outer tube wall
+  
+    temp_x = np.arange(0,points,1)
+    temp_y = np.arange(1.0,points,1)
+    
+    for i in temp_x:
+        str_x = str(int(i))
+        str_y = str(int(i+1))
+        tube_spring.write(str_x)
+        tube_spring.write(' ')
+        tube_spring.write(str_y)
+        tube_spring.write(' ')
+        tube_spring.write(spring)
+        tube_spring.write(' ')
+        tube_spring.write(dx)
+        tube_spring.write('\n')
+    print(temp_x.size)
+# right outer circle 
+
+    temp_x = np.arange(points, points+circ,1)
+    temp_y = np.arange(points+1, points + circ, 1)
+
+    for i in temp_x:
+        str_x = str(int(i))
+        str_y = str(int(i+1))
+        tube_spring.write(str_x)
+        tube_spring.write(' ')
+        tube_spring.write(str_y)
+        tube_spring.write(' ')
+        tube_spring.write(spring)
+        tube_spring.write(' ')
+        tube_spring.write(ds_outer1)
+        tube_spring.write('\n')
+    print(temp_x.size)
+#top outer straight tube
+
+    temp_x = np.arange(points+circ, 2*points+circ,1)
+    temp_y = np.arange(points+circ+1, 2*points+circ,1)
+
+    for i in temp_x:
+        str_x = str(int(i))
+        str_y = str(int(i+1))
+        tube_spring.write(str_x)
+        tube_spring.write(' ')
+        tube_spring.write(str_y)
+        tube_spring.write(' ')
+        tube_spring.write(spring)
+        tube_spring.write(' ')
+        tube_spring.write(dx)
+        tube_spring.write('\n')
+    print(temp_x.size)
+#left outer tube
+
+    temp_x = np.arange(2*points+circ, 2*points+2*circ-1,1)
+    temp_y = np.arange(2*points+circ+1, 2*points+2*circ, 1)
+
+    for i in temp_x:
+        str_x = str(int(i))
+        str_y = str(int(i+1))
+        tube_spring.write(str_x)
+        tube_spring.write(' ')
+        tube_spring.write(str_y)
+        tube_spring.write(' ')
+        tube_spring.write(spring)
+        tube_spring.write(' ')
+        tube_spring.write(ds_outer1)
+        tube_spring.write('\n')
+    print(temp_x.size)
+#bottom inner tube 
+    
+    temp_x = np.arange(2*points+2*circ, 3*points+2*circ,1)
+    temp_y = np.arange(2*points+2*circ+1, 3*points+2*circ, 1)
+
+    for i in temp_x:
+        str_x = str(int(i))
+        str_y = str(int(i+1))
+        tube_spring.write(str_x)
+        tube_spring.write(' ')
+        tube_spring.write(str_y)
+        tube_spring.write(' ')
+        tube_spring.write(spring)
+        tube_spring.write(' ')
+        tube_spring.write(dx)
+        tube_spring.write('\n')
+    print(temp_x.size)
+#right inner cirular tube 
+
+    temp_x = np.arange(3*points+2*circ, 3*points+3*circ, 1)
+    temp_y = np.arange(3*points+2*circ+1, 3*points+3*circ, 1)
+
+    for i in temp_x:
+        str_x = str(int(i))
+        str_y = str(int(i+1))
+        tube_spring.write(str_x)
+        tube_spring.write(' ')
+        tube_spring.write(str_y)
+        tube_spring.write(' ')
+        tube_spring.write(spring)
+        tube_spring.write(' ')
+        tube_spring.write(ds_inner1)
+        tube_spring.write('\n')
+    print(temp_x.size)
+#top inner straight tube
+
+    temp_x = np.arange(3*points+3*circ, 4*points+3*circ, 1)
+    temp_y = np.arange(3*points+3*circ+1, 4*points+3*circ, 1)
+
+    for i in temp_x:
+        str_x = str(int(i))
+        str_y = str(int(i+1))
+        tube_spring.write(str_x)
+        tube_spring.write(' ')
+        tube_spring.write(str_y)
+        tube_spring.write(' ')
+        tube_spring.write(spring)
+        tube_spring.write(' ')
+        tube_spring.write(dx)
+        tube_spring.write('\n')
+    print(temp_x.size)
+#left inner circular tube 
+
+    temp_x = np.arange(4*points+3*circ, 4*points+4*circ-1, 1)
+    temp_y = np.arange(4*points+3*circ+1, 4*points+4*circ, 1)
+
+    for i in temp_x:
+        str_x = str(int(i))
+        str_y = str(int(i+1))
+        tube_spring.write(str_x)
+        tube_spring.write(' ')
+        tube_spring.write(str_y)
+        tube_spring.write(' ')
+        tube_spring.write(spring)
+        tube_spring.write(' ')
+        tube_spring.write(ds_inner1)
+        tube_spring.write('\n')
+    print(temp_x.size)
+#connecting the begining and end of the inner/outer tube
+
+    x1_final = str(int(2*points+2*circ-1))
+    x2_final = str(0)
+    tube_spring.write(x1_final)
+    tube_spring.write(' ')
+    tube_spring.write(x2_final)
+    tube_spring.write(' ')
+    tube_spring.write(spring)
+    tube_spring.write(' ')
+    tube_spring.write(ds_inner1)
+    tube_spring.write('\n')
+
+    x1_final = str(int(4*points+4*circ-1))
+    x2_final = str(int(2*points+2*circ))
+    tube_spring.write(x1_final)
+    tube_spring.write(' ')
+    tube_spring.write(x2_final)
+    tube_spring.write(' ')
+    tube_spring.write(spring)
+    tube_spring.write(' ')
+    tube_spring.write(ds_inner1)
+    
+    
+
+
+#close file
+
+    tube_spring.close()
+################################################
+#beam connecting ever three points, enumerating 
+#begins on outter straight portion
+################################################                           
+                           
+    tube_beam = open('tube_points.beam','w')
+    npts = str(tot_points-2)
+    tube_beam.write(npts)
+    tube_beam.write('\n')
+   	
+
+#begin with bottom straight
+    
+    x_temp = np.arange(0, points-1, 1)
+
+    for i in  x_temp:
+        strx = str(int(i))
+        stry = str(int(i+1))
+        strz = str(int(i+2))
+        tube_beam.write(strx)
+        tube_beam.write(' ')
+        tube_beam.write(stry)
+        tube_beam.write(' ')
+        tube_beam.write(strz)
+        tube_beam.write(' ')
+        tube_beam.write(beam)
+        tube_beam.write(' ')
+#        tube_beam.write(dx)
+        tube_beam.write('\n')
+    print(temp_x.size)
+
+#right outer circle
+
+    x_temp = np.arange(points-1, points+circ-1, 1)
+   
+    for i in  x_temp:
+        strx = str(int(i))
+        stry = str(int(i+1))
+        strz = str(int(i+2))
+        tube_beam.write(strx)
+        tube_beam.write(' ')
+        tube_beam.write(stry)
+        tube_beam.write(' ')
+        tube_beam.write(strz)
+        tube_beam.write(' ')
+        tube_beam.write(beam)
+        tube_beam.write(' ')
+#        tube_beam.write(ds_outer1)
+        tube_beam.write('\n')
+    print(temp_x.size)
+
+#top straight portion
+
+    x_temp = np.arange(points+circ-1, 2*points+circ-1, 1)
+
+    for i in  x_temp:
+        strx = str(int(i))
+        stry = str(int(i+1))
+        strz = str(int(i+2))
+        tube_beam.write(strx)
+        tube_beam.write(' ')
+        tube_beam.write(stry)
+        tube_beam.write(' ')
+        tube_beam.write(strz)
+        tube_beam.write(' ')
+        tube_beam.write(beam)
+        tube_beam.write(' ')
+ #       tube_beam.write(dx)
+        tube_beam.write('\n')
+    print(temp_x.size)
+#left outer circle
+
+    x_temp = np.arange(2*points+circ-1, 2*points+2*circ-2, 1)
+
+    for i in  x_temp:
+        strx = str(int(i))
+        stry = str(int(i+1))
+        strz = str(int(i+2))
+        tube_beam.write(strx)
+        tube_beam.write(' ')
+        tube_beam.write(stry)
+        tube_beam.write(' ')
+        tube_beam.write(strz)
+        tube_beam.write(' ')
+        tube_beam.write(beam)
+        tube_beam.write(' ')
+  #      tube_beam.write(ds_outer1)
+        tube_beam.write('\n')
+    print(temp_x.size)
+#bottom inner straight 
+    
+    x_temp = np.arange(2*points+2*circ, 3*points+2*circ-1,1)
+    
+    for i in  x_temp:
+        strx = str(int(i))
+        stry = str(int(i+1))
+        strz = str(int(i+2))
+        tube_beam.write(strx)
+        tube_beam.write(' ')
+        tube_beam.write(stry)
+        tube_beam.write(' ')
+        tube_beam.write(strz)
+        tube_beam.write(' ')
+        tube_beam.write(beam)
+        tube_beam.write(' ')
+#        tube_beam.write(dx)
+        tube_beam.write('\n')
+    print(temp_x.size)
+#right inner circle
+
+    x_temp = np.arange(3*points+2*circ-1, 3*points+3*circ-1,1)
+    y_temp = np.arange(3*points+2*circ+1, 3*points+3*circ-1,1)
+    z_temp = np.arange(3*points+2*circ+2, 3*points+3*circ,1)
+    
+    for i in  x_temp:
+        strx = str(int(i))
+        stry = str(int(i+1))
+        strz = str(int(i+2))
+        tube_beam.write(strx)
+        tube_beam.write(' ')
+        tube_beam.write(stry)
+        tube_beam.write(' ')
+        tube_beam.write(strz)
+        tube_beam.write(' ')
+        tube_beam.write(beam)
+        tube_beam.write(' ')
+ #       tube_beam.write(ds_inner1)
+        tube_beam.write('\n')
+    print(temp_x.size)
+#upper inner straight
+
+    x_temp = np.arange(3*points+3*circ-1, 4*points+3*circ-1, 1)
+    y_temp = np.arange(3*points+3*circ+1, 4*points+3*circ-1, 1)
+    z_temp = np.arange(3*points+3*circ+2, 4*points+3*circ, 1)
+
+    for i in  x_temp:
+        strx = str(int(i))
+        stry = str(int(i+1))
+        strz = str(int(i+2))
+        tube_beam.write(strx)
+        tube_beam.write(' ')
+        tube_beam.write(stry)
+        tube_beam.write(' ')
+        tube_beam.write(strz)
+        tube_beam.write(' ')
+        tube_beam.write(beam)
+        tube_beam.write(' ')
+  #      tube_beam.write(dx)
+        tube_beam.write('\n')
+    print(temp_x.size)
+
+# left inner circle 
+    
+    x_temp = np.arange(4*points+3*circ-1, 4*points+4*circ-2,1)
+    y_temp = np.arange(4*points+3*circ+1, 4*points+4*circ-1,1)
+    z_temp = np.arange(4*points+3*circ+2, 4*points+4*circ,1)
+    
+    for i in  x_temp:
+        strx = str(int(i))
+        stry = str(int(i+1))
+        strz = str(int(i+2))
+        tube_beam.write(strx)
+        tube_beam.write(' ')
+        tube_beam.write(stry)
+        tube_beam.write(' ')
+        tube_beam.write(strz)
+        tube_beam.write(' ')
+        tube_beam.write(beam)
+        tube_beam.write(' ')
+   #     tube_beam.write(ds_inner1)
+        tube_beam.write('\n')
+    print(temp_x.size)
+# connecting a beam to the begining and end of the tube portions
+
+    x1_final = str(int(2*points+2*circ-1))
+    x2_final = str(0)
+    x3_final = str(1)
+    tube_beam.write(x1_final)
+    tube_beam.write(' ')
+    tube_beam.write(x2_final)
+    tube_beam.write(' ')
+    tube_beam.write(x3_final)
+    tube_beam.write(' ')
+    tube_beam.write(beam)
+    tube_beam.write('\n')
+
+    x1_final = str(int(2*points+2*circ-2))
+    x2_final = str(int(2*points+2*circ-1))
+    x3_final = str(0)
+    tube_beam.write(x1_final)
+    tube_beam.write(' ')
+    tube_beam.write(x2_final)
+    tube_beam.write(' ')
+    tube_beam.write(x3_final)
+    tube_beam.write(' ')
+    tube_beam.write(beam)
+    tube_beam.write('\n')
+
+
+#    x1_final = str(int(4*points+4*circ-2))
+#    x2_final = str(int(4*points+4*circ-1))
+#    x3_final = str(int(2*points+2*circ))
+#    tube_beam.write(x1_final)
+#    tube_beam.write(' ')
+#    tube_beam.write(x2_final)
+#    tube_beam.write(' ')
+#    tube_beam.write(x3_final)
+#    tube_beam.write(' ')
+#    tube_beam.write(beam)
+#    tube_beam.write('\n')
+
+#    x1_final = str(int(4*points+4*circ-1))
+#    x2_final = str(int(2*points+2*circ))
+#    x3_final = str(int(2*points+2*circ+1))
+#    tube_beam.write(x1_final)
+#    tube_beam.write(' ')
+#    tube_beam.write(x2_final)
+#    tube_beam.write(' ')
+#    tube_beam.write(x3_final)
+#    tube_beam.write(' ')
+#    tube_beam.write(beam)
+#    tube_beam.write('\n')
+#Close file
+
+    tube_beam.close()
+
+###########################################################################
+#target points, note that these are specified points which 
+#are iterated over at each time step, then entire structure
+#should not be target points. The file is of the form: 'point #' "stiffness"
+############################################################################	                                                                                                                                             
+    tube_points = open('tube_points.target','w')
+    num_targetpts = 2*(points)   #nuber of target points
+    tube_points.write(tot_points_str)
+    tube_points.write('\n')
+    str_innery = str(1.0)  #stiffness, not sure what it should be
+
+    for i in np.arange(0,points,1):     #writing the bottom straight outer tube
+        i_str = str(i)
+        tube_points.write(i_str)
+        tube_points.write(' ')
+        tube_points.write(str_innery)
+        tube_points.write('\n')
+
+    for i in np.arange(2*points+2*circ,3*points+2*circ,1):   #writing top straight as target points
+        i_str = str(i)
+        tube_points.write(i_str)
+        tube_points.write(' ')
+        tube_points.write(y_str)
+        tube_points.write('\n')
+
+
+    tube_points.close()        

@@ -1,0 +1,60 @@
+#include "update_target_point_positions.h"
+
+// IBAMR INCLUDES
+#include <ibamr/IBTargetPointForceSpec.h>
+
+// IBTK INCLUDES
+#include <ibtk/LNodeIndexData.h>
+
+// NAMESPACE
+using namespace IBAMR;
+
+void
+update_target_point_positions(
+    tbox::Pointer<hier::PatchHierarchy<NDIM> > hierarchy,
+    LDataManager* const lag_manager,
+    const double current_time,
+    const double dt)
+{
+
+  // values to describe the periodic motion of the wall motion
+
+  static const double alpha = 0.3   //amplitude of wave motion
+    static const double beta = 2   //scaling of the frequency of ocsillations
+
+const int lag_node_index_idx = lag_manager->getLNodeIndexPatchDescriptorIndex();
+
+    // Update the target point positions in their associated target point force
+    // specs.
+    const int finest_ln = hierarchy->getFinestLevelNumber();
+    tbox::Pointer<hier::PatchLevel<NDIM> > level = hierarchy->getPatchLevel(finest_ln);
+    for (SAMRAI::hier::PatchLevel<NDIM>::Iterator p(level); p; p++)
+    {
+        SAMRAI::tbox::Pointer<SAMRAI::hier::Patch<NDIM> > patch = level->getPatch(p());
+        const SAMRAI::hier::Box<NDIM>& patch_box = patch->getBox();
+        const SAMRAI::tbox::Pointer<LNodeIndexData2> idx_data = patch->getPatchData(lag_node_index_idx);
+        for (LNodeIndexData2::Iterator it(patch_box); it; it++)
+        {
+            const SAMRAI::pdat::CellIndex<NDIM>& i = *it;
+            const LNodeIndexSet& node_set = (*idx_data)(i);
+            for (LNodeIndexSet::const_iterator n = node_set.begin(); n != node_set.end(); ++n)
+            {
+                const LNodeIndexSet::value_type& node_idx = *n;
+                const int lag_idx = node_idx->getLagrangianIndex();
+                const std::vector<SAMRAI::tbox::Pointer<Stashable> >& stash_data = node_idx->getStashData();
+                for (unsigned l = 0; l < stash_data.size(); ++l)
+                {
+                    SAMRAI::tbox::Pointer<IBTargetPointForceSpec> force_spec = stash_data[l];
+                    if (!force_spec.isNull())
+                    {
+                        // NOTES: lag_idx      is the "index" of the Lagrangian point (lag_idx = 0, 1, ..., N-1, where N is the number of Lagrangian points)
+                        //                     0                <= lag_idx <   num_pts_per_wing ===> left wing
+                        //                     num_pts_per_wing <= lag_idx < 2*num_pts_per_wing ===> right wing
+                        //        X_target     is the target position of the target point
+                        //        X_target[0]  is the x component of the target position
+                        //        X_target[1]  is the y component of the target position
+                        //        X_target[2]  is the z component of the target position (for a 3D simulation)
+                        // Here, we translate the left wing to the left and the right wing to the right by a prescribed velocity
+                        std::vector<double>& X_target = force_spec->getTargetPointPosition();
+                        if (lag_idx < num_pts_per_wing)
+			  X_target[1] = alpha*sin(beta*dt);

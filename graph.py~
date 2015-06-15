@@ -1,0 +1,7 @@
+import numpy as np 
+import matplotlib as plt 
+
+array = numpy.loadtxt('tube_points.txt')
+
+plt.plot(array)
+plt.show()
