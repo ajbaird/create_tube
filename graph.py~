@@ -1,7 +1,9 @@
 import numpy as np 
-import matplotlib as plt 
+import matplotlib.pyplot as plt 
 
-array = numpy.loadtxt('tube_points.txt')
+array = np.loadtxt('tube_points.vertex', skiprows=1)
 
-plt.plot(array)
+print np.shape(array)
+
+plt.plot(array[:,0], array[:,1])
 plt.show()
